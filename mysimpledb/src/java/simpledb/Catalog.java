@@ -22,8 +22,11 @@ public class Catalog {
      * Constructor.
      * Creates a new, empty catalog.
      */
+	private Hashtable<String,DbFile> tables;
+	private Hashtable<String,String> key;
     public Catalog() {
-        // some code goes here
+        this.tables = new Hashtable<String,DbFile> ();
+        this.key = new Hashtable<String,String>();
     }
 
     /**
@@ -37,7 +40,8 @@ public class Catalog {
      *                  conflict exists, use the last table to be added as the table for a given name.
      */
     public void addTable(DbFile file, String name, String pkeyField) {
-        // some code goes here
+        this.tables.put(name, file);
+        this.key.put(Integer.toString(file.getId()), pkeyField);
     }
 
     public void addTable(DbFile file, String name) {
@@ -63,7 +67,12 @@ public class Catalog {
      */
     public int getTableId(String name) throws NoSuchElementException {
         // some code goes here
-        return 0;
+    	try{
+    		return this.tables.get(name).getId();
+    	}
+    	catch (Exception e){
+    		throw new NoSuchElementException();
+    	}
     }
 
     /**
@@ -74,8 +83,13 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        for (String key : tables.keySet()){
+        	DbFile temp = tables.get(key);
+        	if (tableid == temp.getId()){
+        		return temp.getTupleDesc();
+        	}
+        }
+        throw new NoSuchElementException();
     }
 
     /**
@@ -87,29 +101,46 @@ public class Catalog {
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
         // some code goes here
-        return null;
+    	for (String key : tables.keySet()){
+        	DbFile temp = tables.get(key);
+        	if (tableid == temp.getId()){
+        		return temp;
+        	}
+        }
+        throw new NoSuchElementException();
     }
 
     public String getPrimaryKey(int tableid) {
         // some code goes here
-        return null;
+        return this.key.get(Integer.toString(tableid));
     }
 
     public Iterator<Integer> tableIdIterator() {
         // some code goes here
-        return null;
+    	List<Integer> result = new ArrayList<Integer>();
+    	for (String key : tables.keySet()){
+        	DbFile temp = tables.get(key);
+        	result.add(temp.getId());
+        }
+        return result.iterator();
     }
 
     public String getTableName(int id) {
         // some code goes here
-        return null;
+    	for (String key : tables.keySet()){
+        	DbFile temp = tables.get(key);
+        	if (id == temp.getId()){
+        		return key;
+        	}
+        }
+    	throw new NoSuchElementException();
     }
 
     /**
      * Delete all tables from the catalog
      */
     public void clear() {
-        // some code goes here
+        this.tables = new Hashtable<String,DbFile>();
     }
 
     /**
