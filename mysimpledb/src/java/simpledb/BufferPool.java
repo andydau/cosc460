@@ -1,6 +1,9 @@
 package simpledb;
 
 import java.io.*;
+import java.util.Map;
+import java.util.Hashtable;
+import java.util.Iterator;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,14 +32,19 @@ public class BufferPool {
      * constructor instead.
      */
     public static final int DEFAULT_PAGES = 50;
-
+    
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
      * @param numPages maximum number of pages in this buffer pool.
      */
+    
+    private Map<PageId,Page> pages;
+    private int maxSize;
+    
     public BufferPool(int numPages) {
-        // some code goes here
+    	pages = new Hashtable<PageId,Page>();
+        maxSize = numPages;
     }
 
     public static int getPageSize() {
@@ -63,10 +71,21 @@ public class BufferPool {
      * @param pid  the ID of the requested page
      * @param perm the requested permissions on the page
      */
-    public Page getPage(TransactionId tid, PageId pid, Permissions perm)
-            throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+    public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws DbException{
+        Page result = this.pages.get(pid);
+        if (result!=null){
+        	return result;
+        }
+    	if (this.pages.size()<this.maxSize){
+    		int tableId = pid.getTableId();
+    		DbFile table = Database.getCatalog().getDatabaseFile(tableId);
+    		Page newPage = table.readPage(pid);
+    		this.pages.put(pid, newPage);
+    		return newPage;
+    	}
+    	else{
+    		throw new DbException("Not Implemented");
+    	}
     }
 
     /**
@@ -92,7 +111,6 @@ public class BufferPool {
         // some code goes here
         // not necessary for lab1|lab2|lab3|lab4                                                         // cosc460
     }
-
     /**
      * Return true if the specified transaction has a lock on the specified page
      */

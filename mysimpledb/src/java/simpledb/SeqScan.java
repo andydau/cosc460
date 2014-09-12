@@ -2,6 +2,8 @@ package simpledb;
 
 import java.util.*;
 
+import simpledb.TupleDesc.TDItem;
+
 /**
  * SeqScan is an implementation of a sequential scan access method that reads
  * each tuple of a table in no particular order (e.g., as they are laid out on
@@ -24,8 +26,30 @@ public class SeqScan implements DbIterator {
      *                   are, but the resulting name can be null.fieldName,
      *                   tableAlias.null, or null.null).
      */
+    
+    private int tableid;
+    private TransactionId tid;
+    private DbFile table;
+    private String alias;
+    private DbFileIterator iterator;
+    private TupleDesc td;
+    
     public SeqScan(TransactionId tid, int tableid, String tableAlias) {
-        // some code goes here
+        this.tableid = tableid;
+        this.tid = tid;
+        this.table = Database.getCatalog().getDatabaseFile(tableid);
+        this.alias = tableAlias;
+        this.iterator = this.table.iterator(this.tid);
+        TupleDesc temp = this.table.getTupleDesc();
+        Iterator<TupleDesc.TDItem> it = temp.iterator();
+        Type[] type = new Type[temp.numFields()];
+        String[] name = new String[temp.numFields()];
+        for (int i = 0; i < type.length;i++){
+        	TupleDesc.TDItem item = it.next();
+        	type[i] = item.fieldType;
+        	name[i] = this.alias+"."+item.fieldName;
+        }
+        this.td = new TupleDesc(type,name);
     }
 
     /**
@@ -34,7 +58,7 @@ public class SeqScan implements DbIterator {
      */
     public String getTableName() {
         // some code goes here
-        return null;
+        return Database.getCatalog().getTableName(this.tableid);
     }
 
     /**
@@ -42,7 +66,7 @@ public class SeqScan implements DbIterator {
      */
     public String getAlias() {
         // some code goes here
-        return null;
+        return this.alias;
     }
 
     public SeqScan(TransactionId tid, int tableid) {
@@ -50,7 +74,7 @@ public class SeqScan implements DbIterator {
     }
 
     public void open() throws DbException, TransactionAbortedException {
-        // some code goes here
+        this.iterator.open();
     }
 
     /**
@@ -64,26 +88,26 @@ public class SeqScan implements DbIterator {
      */
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+        return this.td;
     }
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
         // some code goes here
-        return false;
+        return this.iterator.hasNext();
     }
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        return this.iterator.next();
     }
 
     public void close() {
-        // some code goes here
+        this.iterator.close();
     }
 
     public void rewind() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
+        this.iterator.rewind();
     }
 }
