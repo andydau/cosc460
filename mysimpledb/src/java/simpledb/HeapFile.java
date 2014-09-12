@@ -96,8 +96,6 @@ public class HeapFile implements DbFile {
      */
     public int numPages() {
         // some code goes here
-    	System.out.println(file.length()+" "+BufferPool.PAGE_SIZE);
-    	
         return (int) Math.ceil((float)file.length()/BufferPool.PAGE_SIZE);
     }
 
