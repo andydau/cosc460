@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.Map;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -41,10 +42,12 @@ public class BufferPool {
     
     private Map<PageId,Page> pages;
     private int maxSize;
+    private LinkedList<PageId> order;
     
     public BufferPool(int numPages) {
-    	pages = new Hashtable<PageId,Page>();
-        maxSize = numPages;
+    	this.pages = new Hashtable<PageId,Page>();
+        this.maxSize = numPages;
+        this.order = new LinkedList<PageId>();
     }
 
     public static int getPageSize() {
@@ -72,7 +75,11 @@ public class BufferPool {
      * @param perm the requested permissions on the page
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws DbException{
-        Page result = this.pages.get(pid);
+    	if (this.order.contains(pid)){
+			this.order.remove(pid);
+		}
+    	this.order.push(pid);
+    	Page result = this.pages.get(pid);
         if (result!=null){
         	return result;
         }
@@ -149,8 +156,8 @@ public class BufferPool {
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+    	DbFile table = Database.getCatalog().getDatabaseFile(tableId);
+    	table.insertTuple(tid, t);
     }
 
     /**
@@ -167,8 +174,19 @@ public class BufferPool {
      */
     public void deleteTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+    	Catalog cat = Database.getCatalog();
+    	Iterator<Integer> it = cat.tableIdIterator();
+    	while (it.hasNext()){
+    		int tableId = it.next();
+    		DbFile table = cat.getDatabaseFile(tableId);
+    		try{
+    			table.deleteTuple(tid, t);
+    		}
+    		catch (DbException e){
+    			continue;
+    		}
+    	}
+    	throw new DbException("can't find tuple");
     }
 
     /**
@@ -177,9 +195,9 @@ public class BufferPool {
      * break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        // some code goes here
-        // not necessary for lab1
-
+        for (PageId pid : this.pages.keySet()){
+        	this.flushPage(pid);
+        }
     }
 
     /**
@@ -189,8 +207,12 @@ public class BufferPool {
      * cache.
      */
     public synchronized void discardPage(PageId pid) {
-        // some code goes here
-        // only necessary for lab6                                                                            // cosc460
+    	try{
+    		this.pages.remove(pid);                            
+    	}
+    	catch (Exception e){
+    		e.printStackTrace();
+    	}
     }
 
     /**
@@ -199,8 +221,9 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized void flushPage(PageId pid) throws IOException {
-        // some code goes here
-        // not necessary for lab1
+    	DbFile table = Database.getCatalog().getDatabaseFile(pid.getTableId());
+    	Page page = this.pages.get(pid);
+    	table.writePage(page);
     }
 
     /**
@@ -215,9 +238,9 @@ public class BufferPool {
      * Discards a page from the buffer pool.
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
-    private synchronized void evictPage() throws DbException {
-        // some code goes here
-        // not necessary for lab1
+    private synchronized void evictPage() throws DbException,IOException {
+        PageId dirtyId = this.order.removeLast();
+        this.flushPage(dirtyId);
     }
 
 }

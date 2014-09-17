@@ -29,6 +29,7 @@ public class HeapTupleIterator implements DbFileIterator {
 	}
 	
 	public void open() throws DbException, TransactionAbortedException{
+		open = true;
 		currentPage = 0;
 		openPage(currentPage);
 	}
