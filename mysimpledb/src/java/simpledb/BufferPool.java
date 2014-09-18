@@ -83,16 +83,14 @@ public class BufferPool {
         if (result!=null){
         	return result;
         }
-    	if (this.pages.size()<this.maxSize){
-    		int tableId = pid.getTableId();
-    		DbFile table = Database.getCatalog().getDatabaseFile(tableId);
-    		Page newPage = table.readPage(pid);
-    		this.pages.put(pid, newPage);
-    		return newPage;
+    	if (this.pages.size()>=this.maxSize){
+    		this.evictPage();	
     	}
-    	else{
-    		throw new DbException("Not Implemented");
-    	}
+    	int tableId = pid.getTableId();
+		DbFile table = Database.getCatalog().getDatabaseFile(tableId);
+		Page newPage = table.readPage(pid);
+		this.pages.put(pid, newPage);
+		return newPage;
     }
 
     /**
@@ -238,9 +236,17 @@ public class BufferPool {
      * Discards a page from the buffer pool.
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
-    private synchronized void evictPage() throws DbException,IOException {
+    private synchronized void evictPage() throws DbException{
         PageId dirtyId = this.order.removeLast();
+        System.out.println(dirtyId.pageNumber());
+        try{
         this.flushPage(dirtyId);
+        }
+        catch (IOException e){
+        	e.printStackTrace();
+        	return;
+        }
+        this.discardPage(dirtyId);
     }
 
 }

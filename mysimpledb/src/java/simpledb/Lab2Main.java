@@ -22,33 +22,33 @@ public class Lab2Main {
 
         try {
             // and run it
-            f.open();
+//            f.open();
             
             //check field1 and modify is necessary
-            while (f.hasNext()) {
-                Tuple tup = f.next();
-                IntField field1 = (IntField) tup.getField(1);
-                int value = field1.getValue();
-                if (value<3){
-                	Tuple newTup = new Tuple(f.getTupleDesc());
-                	Field comp = new IntField(3);
-                	newTup.setField(0, tup.getField(0));
-                	newTup.setField(1, comp);
-                	newTup.setField(2, tup.getField(2));
-                	table1.deleteTuple(tid, tup);
-                	table1.insertTuple(tid, newTup);
-                }
-            }
+//            while (f.hasNext()) {
+//                Tuple tup = f.next();
+//                IntField field1 = (IntField) tup.getField(1);
+//                int value = field1.getValue();
+//                if (value<3){
+//                	Tuple newTup = new Tuple(f.getTupleDesc());
+//                	Field comp = new IntField(3);
+//                	newTup.setField(0, tup.getField(0));
+//                	newTup.setField(1, comp);
+//                	newTup.setField(2, tup.getField(2));
+//                	table1.deleteTuple(tid, tup);
+//                	table1.insertTuple(tid, newTup);
+//                }
+//            }
             
             //Add the last tuple
-            Tuple newTup = new Tuple(f.getTupleDesc());
-            Field newF = new IntField(99);
-            newTup.setField(0, newF);
-        	newTup.setField(1, newF);
-        	newTup.setField(2, newF);
-        	table1.insertTuple(tid, newTup);
+//            Tuple newTup = new Tuple(f.getTupleDesc());
+//            Field newF = new IntField(99);
+//            newTup.setField(0, newF);
+//        	newTup.setField(1, newF);
+//        	newTup.setField(2, newF);
+//        	table1.insertTuple(tid, newTup);
         	
-        	Database.getBufferPool().flushAllPages();
+//        	Database.getBufferPool().flushAllPages();
         	f.open();
         	while (f.hasNext()) {
                 Tuple tup = f.next();

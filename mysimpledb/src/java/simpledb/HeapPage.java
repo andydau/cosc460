@@ -281,8 +281,6 @@ public class HeapPage implements Page {
     	if (slotNo==-1){
     		throw new DbException("No empty slot");
     	}
-    	if (slotNo==503){
-    	}
     	RecordId newId = new RecordId(this.pid,slotNo);
     	t.setRecordId(newId);
     	this.tuples[slotNo] = t;
