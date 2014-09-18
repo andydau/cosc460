@@ -238,9 +238,8 @@ public class BufferPool {
      */
     private synchronized void evictPage() throws DbException{
         PageId dirtyId = this.order.removeLast();
-        System.out.println(dirtyId.pageNumber());
         try{
-        this.flushPage(dirtyId);
+        	this.flushPage(dirtyId);
         }
         catch (IOException e){
         	e.printStackTrace();
