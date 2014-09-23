@@ -259,6 +259,7 @@ public class HeapPage implements Page {
         if (!isSlotUsed(rid.tupleno())){
         	throw new DbException("Tuple not in page");
         }
+        t.setRecordId(null);
         markSlotUsed(rid.tupleno(),false);
     }
 

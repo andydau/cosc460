@@ -206,7 +206,7 @@ public class BufferPool {
      */
     public synchronized void discardPage(PageId pid) {
     	try{
-    		this.pages.remove(pid);                            
+    		this.pages.remove(pid);
     	}
     	catch (Exception e){
     		e.printStackTrace();
