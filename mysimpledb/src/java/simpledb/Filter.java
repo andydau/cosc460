@@ -34,11 +34,13 @@ public class Filter extends Operator {
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        this.child.open();
+    	super.open();
+    	this.child.open();
     }
 
     public void close() {
-        this.child.close();
+    	super.close();
+    	this.child.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
@@ -63,7 +65,7 @@ public class Filter extends Operator {
         		return t1;
         	}
         }
-        throw new NoSuchElementException();
+        return null;
     }
 
     @Override

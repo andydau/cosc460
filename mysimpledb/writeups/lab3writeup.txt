@@ -28,13 +28,13 @@ return list
 7.
 if iterR.hasNext()&&t1==null
     t1 = iterR.next()
-while (iterS.hasNext())&&(t1!=null):
-    t2 = iterS.next()
-    if t1 and t2 match join predicate:
-        tNew = merge(t1, t2)   # create a new tuple repr. the join
-        return tNew
-iterS.rewind()
-if iterR.hasNext():
+while (iterR.hasNext())||(iterS.hasNext())
+    while (iterS.hasNext())&&(t1!=null):
+        t2 = iterS.next()
+        if t1 and t2 match join predicate:
+            tNew = merge(t1, t2)   # create a new tuple repr. the join
+            return tNew
+    iterS.rewind()
     t1 = iterR.next()
 return null
 

@@ -81,6 +81,7 @@ public class HeapFile implements DbFile {
     		return new HeapPage(hid,buffer);
     	}
     	catch (IOException e){
+    		e.printStackTrace();
     		return null;
     	}
     }
