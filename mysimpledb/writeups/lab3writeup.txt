@@ -3,13 +3,41 @@ Report for Lab 3
 
 Answer the questions from the lab description here.  Questions 8 and 9 do not require answers.
 
-1.
-2.
-3.
-4.
+1.TupleIterator, Operator, SeqScan
+2.Aggregate, Delete, Filter, HashEquiJoin, Insert, Join, OrderBy, Project
+3.select, project, join
+4.It inherits these methods from the class Operator since it's a subclass of Operator.
 5.
+while (iter.hasNext()):
+	t = iterR.next()
+	if t matches predicate:
+		return iterR.next()
+return null
 6.
+list = []
+while iterR.hasNext():
+    t1 = iterR.next()
+    while iterS.hasNext():
+	t2 = iterS.next()
+        if t1 and t2 match join predicate:
+            tNew = merge(t1, t2)   # create a new tuple repr. the join
+            list.append( tNew )
+    iterS.rewind()
+return list
+
 7.
+if iterR.hasNext()&&t1==null
+    t1 = iterR.next()
+while (iterS.hasNext())&&(t1!=null):
+    t2 = iterS.next()
+    if t1 and t2 match join predicate:
+        tNew = merge(t1, t2)   # create a new tuple repr. the join
+        return tNew
+iterS.rewind()
+if iterR.hasNext():
+    t1 = iterR.next()
+return null
+
 
 After you complete lab 3, please answer the following questions.  
 
@@ -20,7 +48,7 @@ After you complete lab 3, please answer the following questions.
 2. What did you think of this assignment?
 
 <Replace this text with your answer>
-
+,
 3. What was the hardest part of this assignment?
 
 <Replace this text with your answer>

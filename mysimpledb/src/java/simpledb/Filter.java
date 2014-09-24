@@ -16,31 +16,33 @@ public class Filter extends Operator {
      * @param p     The predicate to filter tuples with
      * @param child The child operator
      */
+    private Predicate pred;
+    private DbIterator child;
+    
     public Filter(Predicate p, DbIterator child) {
-        // some code goes here
+        this.pred = p;
+        this.child = child;
     }
 
     public Predicate getPredicate() {
-        // some code goes here
-        return null;
+        return this.pred;
     }
 
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return this.child.getTupleDesc();
     }
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
+        this.child.open();
     }
 
     public void close() {
-        // some code goes here
+        this.child.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+        this.child.rewind();
     }
 
     /**
@@ -55,7 +57,13 @@ public class Filter extends Operator {
     protected Tuple fetchNext() throws NoSuchElementException,
             TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        while (this.child.hasNext()){
+        	Tuple t1 = this.child.next();
+        	if (this.pred.filter(t1)){
+        		return t1;
+        	}
+        }
+        throw new NoSuchElementException();
     }
 
     @Override
