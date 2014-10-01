@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.ArrayList;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -178,7 +179,13 @@ public class BufferPool {
     		int tableId = it.next();
     		DbFile table = cat.getDatabaseFile(tableId);
     		try{
-    			table.deleteTuple(tid, t);
+    			Iterator<Page> dirty = table.deleteTuple(tid, t).iterator();
+    			while (dirty.hasNext()){
+    				Page dirtyPage = dirty.next();
+    				PageId pid = dirtyPage.getId();
+    				this.pages.put(pid, dirtyPage);
+    			}
+    			return;
     		}
     		catch (DbException e){
     			continue;
