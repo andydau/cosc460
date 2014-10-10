@@ -253,6 +253,9 @@ public class HeapPage implements Page {
      */
     public void deleteTuple(Tuple t) throws DbException {
         RecordId rid = t.getRecordId();
+        if (rid==null){
+        	throw new DbException("Page does not exist");
+        }
         if (!rid.getPageId().equals(this.pid)){
         	throw new DbException("PageId is not correct");
         }
