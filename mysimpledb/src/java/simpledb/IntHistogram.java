@@ -21,8 +21,17 @@ public class IntHistogram {
      * @param min     The minimum integer value that will ever be passed to this class for histogramming
      * @param max     The maximum integer value that will ever be passed to this class for histogramming
      */
+	private int[] buckets;
+	private int min;
+	private int max;
+	private int bucketSize;
+	private int total;
     public IntHistogram(int buckets, int min, int max) {
-        // some code goes here
+        this.buckets = (buckets<=max-min+1)? new int[buckets]:new int[max-min+1];
+        this.min = min;
+        this.max = max;
+        this.bucketSize = (max-min+1)/this.buckets.length;
+        this.total = 0;
     }
 
     /**
@@ -31,7 +40,15 @@ public class IntHistogram {
      * @param v Value to add to the histogram
      */
     public void addValue(int v) {
-        // some code goes here
+        if ((v>max)||(v<min)){
+        	throw new RuntimeException();
+        }
+        int bucketNo = (v-min)/bucketSize;
+        if (bucketNo>=this.buckets.length){
+        	bucketNo = this.buckets.length-1;
+        }
+        this.total++;
+        this.buckets[bucketNo]++;
     }
 
     /**
@@ -45,9 +62,39 @@ public class IntHistogram {
      * @return Predicted selectivity of this particular operator and value
      */
     public double estimateSelectivity(Predicate.Op op, int v) {
-
-        // some code goes here
-        return -1.0;
+    	int bucketNo = (v-min)/bucketSize;
+    	if (bucketNo>=this.buckets.length){
+        	bucketNo = this.buckets.length-1;
+        }
+    	if (bucketNo<0){
+    		bucketNo = 0;
+    	}
+    	int bucketStart = min+bucketNo*this.bucketSize;
+    	int bucketEnd = (bucketNo != this.buckets.length-1) ? bucketStart+this.bucketSize-1:max;
+    	double equals = 0;
+    	if ((bucketStart<=v)&&(v<=bucketEnd)){
+    		equals = this.buckets[bucketNo]/(double)(bucketEnd-bucketStart+1);
+    	}
+    	double smaller = 0;
+    	smaller += (v<=bucketEnd) ? equals*(v-bucketStart):this.bucketSize;
+    	for (int i = 0; i < bucketNo; i++){
+    		smaller += this.buckets[i];
+    	}
+    	double greater = 0;
+    	greater += (v>=bucketStart) ? equals*(bucketEnd-v):this.bucketSize;
+    	for (int i = bucketNo+1; i < this.buckets.length; i++){
+    		greater += this.buckets[i];
+    	}
+    	switch (op.toString()){
+    		case "=": return equals/this.total;
+    		case "LIKE": return equals/this.total;
+    		case ">": return greater/this.total;
+    		case ">=": return (equals+greater)/this.total;
+    		case "<": return smaller/this.total;
+    		case "<=": return (smaller+equals)/this.total;
+    		case "<>": return (smaller+greater)/this.total;
+    	}
+    	return 0;
     }
 
     /**
