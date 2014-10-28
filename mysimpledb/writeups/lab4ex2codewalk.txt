@@ -69,11 +69,13 @@ Walk thru 7: JoinOptimizer.computeCostAndCardOfSubplan()
 Walk thru 8: JoinOptimizer.estimateJoinCost()
 
 	Calculate the estimated cost of performing a join operation based on the estimated costs and cardinalities of the query provided.
+	It is estimated using the following formula: joincost(t1 join t2) = scancost(t1) + ntups(t1) x scancost(t2) 
 	
 
 Walk thru 9: JoinOptimizer.estimateJoinCardinality()
 
 	Caculate the estimated cardinality of a join operation based on the estimated costs and cardinalities of the query provided.
+	It is estimated using the formula: ntups(t1 join t2) = ntups(t1) * ntups(t2) / max ( V(A, t1), V(B, t2) ) where V(A, t1) is the number of distinct values of attribute A in t1.
 
 Walk thru 10 query.execute()
 	
@@ -81,4 +83,5 @@ Walk thru 10 query.execute()
 
 	After a query is parsed into the Parser, it is handle according to its type and then executed if it can be parsed.
 	Otherwise, an exception is thrown.
+	The method itself print out the result of the operation by traversing (and executing) relational algebra tree and print out the output.
 

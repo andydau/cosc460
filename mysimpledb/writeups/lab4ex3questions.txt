@@ -17,7 +17,7 @@ Answer these questions.  With each question is a hint as to which part of the co
 	And finally the Join nodes (which dominates run time) are at the top levels of the tree.
 
 (Walk thru 5) Suppose a query applies multiple filters to a single table.  For example, the query described in the lab write up filters on both actor first and last name.  In such cases, how is the selectivity estimated?  
-	It's going to be the product of the estimated selectivity of each filter.
+	It's going to be the product of the estimated selectivity of each individual filter.
 
 (Walk thru 5) Explain the meaning of this if statement.  Why should the subplanMap have size 0 or 1 at this point?
 
