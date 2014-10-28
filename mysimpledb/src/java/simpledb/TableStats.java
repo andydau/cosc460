@@ -189,7 +189,11 @@ public class TableStats {
      */
     public int estimateTableCardinality(double selectivityFactor) {
         // some code goes here
-        return (int)(this.tupleNum*selectivityFactor);
+        int result = (int)(this.tupleNum*selectivityFactor);
+        if ((result==0)&&(selectivityFactor>0)){
+        	result = 1;
+        }
+        return result;
     }
 
     /**
