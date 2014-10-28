@@ -41,6 +41,7 @@ public class IntHistogram {
      */
     public void addValue(int v) {
         if ((v>max)||(v<min)){
+        	System.out.println(min+" "+max+" "+v);
         	throw new RuntimeException();
         }
         int bucketNo = (v-min)/bucketSize;
@@ -76,12 +77,12 @@ public class IntHistogram {
     		equals = this.buckets[bucketNo]/(double)(bucketEnd-bucketStart+1);
     	}
     	double smaller = 0;
-    	smaller += (v<=bucketEnd) ? equals*(v-bucketStart):this.bucketSize;
+    	smaller += (v<=bucketEnd) ? equals*(v-bucketStart):this.buckets[this.buckets.length-1];
     	for (int i = 0; i < bucketNo; i++){
     		smaller += this.buckets[i];
     	}
     	double greater = 0;
-    	greater += (v>=bucketStart) ? equals*(bucketEnd-v):this.bucketSize;
+    	greater += (v>=bucketStart) ? equals*(bucketEnd-v):this.buckets[0];
     	for (int i = bucketNo+1; i < this.buckets.length; i++){
     		greater += this.buckets[i];
     	}
