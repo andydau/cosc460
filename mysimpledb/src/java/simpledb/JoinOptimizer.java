@@ -114,7 +114,7 @@ public class JoinOptimizer {
             // HINT: You may need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic
             // nested-loops join.
-            return -1.0;
+            return cost1 + card1*cost2;
         }
     }
 
@@ -154,7 +154,29 @@ public class JoinOptimizer {
                                                    Map<String, Integer> tableAliasToId) {
         int card = 1;
         // some code goes here
-        return card <= 0 ? 1 : card;
+        if (!joinOp.equals(Predicate.Op.EQUALS)){
+        	return (int)(card1*card2*0.3);
+        }
+        DbFile table1 = Database.getCatalog().getDatabaseFile(tableAliasToId.get(table1Alias));
+        String name1 = Database.getCatalog().getTableName(table1.getId());
+        TableStats stat1 = stats.get(name1);
+        int field1 = table1.getTupleDesc().fieldNameToIndex(field1PureName);
+        int num1 = stat1.numDistinctValues(field1);
+        
+        DbFile table2 = Database.getCatalog().getDatabaseFile(tableAliasToId.get(table2Alias));
+        String name2 = Database.getCatalog().getTableName(table2.getId());
+        TableStats stat2 = stats.get(name2);
+        int field2 = table2.getTupleDesc().fieldNameToIndex(field2PureName);
+        int num2 = stat2.numDistinctValues(field2);
+        
+        int result = Math.min(num1, num2);
+        if (t1pkey){
+        	result = Math.max(card1, result);
+        }
+        if (t2pkey){
+        	result = Math.max(result, card2);
+        }
+        return result;
     }
 
     /**
@@ -214,7 +236,31 @@ public class JoinOptimizer {
 
         // some code goes here
         //Replace the following
-        return joins;
+    	PlanCache pc = new PlanCache();
+    	for (int i = 1; i < this.joins.size()+1;i++){
+    		Iterator<Set<LogicalJoinNode>> subsets = enumerateSubsets(this.joins,i).iterator();
+    		while (subsets.hasNext()){
+    			Set<LogicalJoinNode> s = subsets.next();
+    			Iterator<LogicalJoinNode> st = s.iterator();
+    			double bestCost = Double.MAX_VALUE;
+    			while (st.hasNext()){
+    				LogicalJoinNode joinToRemove = st.next();
+    				CostCard cc = computeCostAndCardOfSubplan(stats, filterSelectivities, 
+                            joinToRemove, s, bestCost,pc);
+    				if (cc==null){
+    					continue;
+    				}
+    				if (cc.cost<bestCost){
+    					bestCost = cc.cost;
+    					pc.addPlan(s, cc.cost, cc.card, cc.plan);
+    				}
+    			}
+    		}
+    	}
+    	//if (explain){
+    	//	printJoins(this.joins, pc, stats, filterSelectivities);
+    	//}
+        return pc.getOrder(new HashSet<LogicalJoinNode>(this.joins));
     }
 
     // ===================== Private Methods =================================
@@ -279,7 +325,7 @@ public class JoinOptimizer {
             t1card = stats.get(table1Name).estimateTableCardinality(
                     filterSelectivities.get(j.t1Alias));
             leftPkey = isPkey(j.t1Alias, j.f1PureName);
-
+            TableStats temp = stats.get(table2Name);
             t2cost = table2Alias == null ? 0 : stats.get(table2Name)
                     .estimateScanCost();
             t2card = table2Alias == null ? 0 : stats.get(table2Name)
