@@ -65,4 +65,6 @@ scan(Genre g)              scan(Movie_Director m)                               
 
 Query 2 plan explanation:
 
-<fill in here>
+The filter of g.genre = 'Drama' return an estimated cardinality of 1 due to a quirk in the StringHistogram that will be explained below. The cost of the join operation is estimated as cost(t1 join t2) = scan(t1)+estimatedCard(t1)*scan(t2). With estimatedCard = 1 throughout most of the tree as shown above, this means that the cost of the joining the 4 tables g,m,d,c will be estimated to be around the sum of the cost of scanning each of the 4 tables. Depends on how the subsets are generated, there can be a number of different plan here but essentially the estimated cost of joining these 4 tables are the same. For the last join, the result of the previous join with estimated cardinality of 12 will be joined with the last table Actor, creating the tree above.
+
+The reason StringHistogram estimated the card of the filter to be 1 is because it uses the IntHistogram to estimate its result. It means that a bucket can include a range of integers so while all string entries of "Drama" is mapped to a single integer, it is added to a general bucket and the histogram code assume all these entries are evenly distributed along the whole range. This leads to the Histogram estimating the cardinality to be 1. It should also be noted that while the StringHistogram is not very useful in this case but it could be very useful in a case where there are a large number of distinct strings.
