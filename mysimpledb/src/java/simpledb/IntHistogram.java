@@ -86,14 +86,14 @@ public class IntHistogram {
     	for (int i = bucketNo+1; i < this.buckets.length; i++){
     		greater += this.buckets[i];
     	}
-    	switch (op.toString()){
-    		case "=": return equals/this.total;
-    		case "LIKE": return equals/this.total;
-    		case ">": return greater/this.total;
-    		case ">=": return (equals+greater)/this.total;
-    		case "<": return smaller/this.total;
-    		case "<=": return (smaller+equals)/this.total;
-    		case "<>": return (smaller+greater)/this.total;
+    	switch (op){
+    		case EQUALS: return equals/this.total;
+    		case LIKE: return equals/this.total;
+    		case GREATER_THAN: return greater/this.total;
+    		case GREATER_THAN_OR_EQ: return (equals+greater)/this.total;
+    		case LESS_THAN: return smaller/this.total;
+    		case LESS_THAN_OR_EQ: return (smaller+equals)/this.total;
+    		case NOT_EQUALS: return (smaller+greater)/this.total;
     	}
     	return 0;
     }

@@ -169,14 +169,69 @@ public class JoinOptimizer {
         int field2 = table2.getTupleDesc().fieldNameToIndex(field2PureName);
         int num2 = stat2.numDistinctValues(field2);
         
-        int result = Math.min(num1, num2);
+        int result = Math.max(num1, num2);
+        result = (card1*card2)/result;
+        System.out.println(card1+" "+num1+" "+card2+" "+num2+" "+result);
+        if (result ==0){
+        	result = 1;
+        }
+        int minKey = -1;
         if (t1pkey){
-        	result = Math.max(card1, result);
+        	minKey = card2;
         }
         if (t2pkey){
-        	result = Math.max(result, card2);
+        	minKey = card1;
+        }
+        if ((t1pkey)&&(t2pkey)){
+        	minKey = Math.min(card1,card2);
+        }
+        if (minKey>-1){
+        	if (result>minKey){
+        		result = minKey;
+        	}
+        }
+        if (result == 1){
+        	System.out.println(t1pkey+" "+t2pkey);
         }
         return result;
+    }
+    
+    private class Subset{
+    	
+    	private int[] map;
+    	private int size;
+    	public Subset(int size, int subSize){
+    		this.map = new int[subSize];
+    		for (int i = 0; i < subSize;i++){
+    			this.map[i] = i;
+    		}
+    		this.size = size;
+    	}
+    	public boolean hasNext(){
+    		if (map[0]>this.size-map.length){
+    			return false;
+    		}
+    		return true;
+    	}
+    	public int[] next(){
+    		if (!hasNext()){
+    			return null;
+    		}
+    		int[] result = map.clone();
+    		int start = 0;
+    		for (int i = map.length-1; i>-1;i--){
+    			if (map[i]>this.size-map.length+i-1){
+    				continue;
+    			}
+    			start = i;
+    			break;
+    		}
+    		map[start]++;
+    		for (int j = start+1;j<map.length;j++){
+    			map[j] = map[start]+j-start;
+    		}
+    		return result;
+    	}
     }
 
     /**
@@ -238,28 +293,53 @@ public class JoinOptimizer {
         //Replace the following
     	PlanCache pc = new PlanCache();
     	for (int i = 1; i < this.joins.size()+1;i++){
-    		Iterator<Set<LogicalJoinNode>> subsets = enumerateSubsets(this.joins,i).iterator();
-    		while (subsets.hasNext()){
-    			Set<LogicalJoinNode> s = subsets.next();
-    			Iterator<LogicalJoinNode> st = s.iterator();
+//    		Iterator<Set<LogicalJoinNode>> subsets = enumerateSubsets(this.joins,i).iterator();
+//    		//System.out.println("Yay");
+//    		while (subsets.hasNext()){
+//    			Set<LogicalJoinNode> s = subsets.next();
+//    			Iterator<LogicalJoinNode> st = s.iterator();
+//    			double bestCost = Double.MAX_VALUE;
+//    			while (st.hasNext()){
+//    				LogicalJoinNode joinToRemove = st.next();
+//    				//System.out.println(joinToRemove);
+//    				CostCard cc = computeCostAndCardOfSubplan(stats, filterSelectivities, 
+//                            joinToRemove, s, bestCost,pc);
+//    				if (cc==null){
+//    					continue;
+//    				}
+//    				if (cc.cost<bestCost){
+//    					bestCost = cc.cost;
+//    					pc.addPlan(s, cc.cost, cc.card, cc.plan);
+//    				}
+//    			}
+//    		}
+    		Subset ss = new Subset(this.joins.size(),i);
+    		while (ss.hasNext()){
+    			int[] bs = ss.next();
+    			HashSet<LogicalJoinNode> hs = new HashSet<LogicalJoinNode>();
+    			for (int j = 0; j<bs.length;j++){
+    				hs.add(this.joins.get(bs[j]));
+    			}
     			double bestCost = Double.MAX_VALUE;
-    			while (st.hasNext()){
-    				LogicalJoinNode joinToRemove = st.next();
+    			for (int j = 0; j<bs.length;j++){
+    				LogicalJoinNode joinToRemove = this.joins.get(bs[j]);
+    				System.out.println(joinToRemove);
     				CostCard cc = computeCostAndCardOfSubplan(stats, filterSelectivities, 
-                            joinToRemove, s, bestCost,pc);
+                          joinToRemove, hs, bestCost,pc);
     				if (cc==null){
     					continue;
     				}
     				if (cc.cost<bestCost){
     					bestCost = cc.cost;
-    					pc.addPlan(s, cc.cost, cc.card, cc.plan);
+    					pc.addPlan(hs, cc.cost, cc.card, cc.plan);
     				}
     			}
     		}
     	}
-    	//if (explain){
-    	//	printJoins(this.joins, pc, stats, filterSelectivities);
-    	//}
+    	if (explain){
+    		Vector<LogicalJoinNode> plan = pc.getOrder(new HashSet<LogicalJoinNode>(this.joins));
+    		printJoins(plan, pc, stats, filterSelectivities);
+    	}
         return pc.getOrder(new HashSet<LogicalJoinNode>(this.joins));
     }
 

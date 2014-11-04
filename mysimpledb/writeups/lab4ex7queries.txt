@@ -10,20 +10,59 @@ and a.fname='Ginger' and a.lname='Rogers';
 
 Query 1 optimizer's plan:
 
-<fill in here>
+ 					π(d.fname,d.lname),card:1
+                                                 |
+                                                 ⨝(m.did=d.id),card:1
+                              ___________________|____________________
+                              |                                      |
+                              ⨝(c.mid=m.mid),card:1                  |
+                ______________|_______________                       |
+                |                            |                       |
+                ⨝(a.id=c.pid),card:1         |                       |
+  ______________|______________              |                       |
+  |                           |              |                       |
+  σ(a.lname=Rogers),card:1    |              |                       |
+  |                           |              |                       |
+  σ(a.fname=Ginger),card:1    |              |                       |
+  |                           |            scan(Movie_Director m)    |
+scan(Actor a)               scan(Casts c)                          scan(Director d)
+
 
 Query 1 plan explanation:
 
-<fill in here>
+We look at the a:c join operations. Since a only has cardinality 1 after applying the filter and the cardinality of the result is approximated to be 1 as well, it is performed first. Similarly, we perform the c:m join next since the outer relation only has cardinality approximately 1 and finally the m:d join.
 
 Query 2:
 
-<fill in here>
+select a.fname, a.lname
+from Actor a, Casts c, Movie_Director m, Director d, Genre g
+where a.id=c.pid and c.mid=m.mid and m.did=d.id 
+and g.mid = m.mid and g.genre='Drama' and d.fname = 'Lars' and d.lname = 'von Trier';
 
-Query 1 optimizer's plan:
 
-<fill in here>
+Query 2 optimizer's plan:
 
-Query 1 plan explanation:
+								π(a.fname,a.lname),card:12
+                                                                               |
+                                                                               ⨝(c.pid=a.id),card:12
+                                                           ____________________|____________________
+                                                           |                                       |
+                                                           ⨝(m.mid=c.mid),card:12                  |
+                                  _________________________|_________________________              |
+                                  |                                                 |              |
+                                  ⨝(m.did=d.id),card:1                              |              |
+               ___________________|___________________                              |              |
+               |                                     |                              |              |
+               ⨝(g.mid=m.mid),card:1                 σ(d.lname=von Trier),card:1    |              |
+  _____________|______________                       |                              |              |
+  |                          |                       σ(d.fname=Lars),card:1         |              |
+  σ(g.genre=Drama),card:1    |                       |                              |              |
+  |                          |                     scan(Director d)                 |            scan(Actor a)
+scan(Genre g)              scan(Movie_Director m)                                 scan(Casts c)
+
+
+
+
+Query 2 plan explanation:
 
 <fill in here>
