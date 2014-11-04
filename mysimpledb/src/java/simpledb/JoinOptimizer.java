@@ -313,6 +313,8 @@ public class JoinOptimizer {
 //    				}
 //    			}
 //    		}
+    		//This part implements a custom subset generator.
+    		//Any call to the next function will return an array of integer of size k, indicating the k joins being considered
     		Subset ss = new Subset(this.joins.size(),i);
     		while (ss.hasNext()){
     			int[] bs = ss.next();

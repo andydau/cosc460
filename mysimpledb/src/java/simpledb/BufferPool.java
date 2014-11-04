@@ -156,7 +156,11 @@ public class BufferPool {
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
     	DbFile table = Database.getCatalog().getDatabaseFile(tableId);
-    	table.insertTuple(tid, t);
+    	ArrayList<Page> dirtied = table.insertTuple(tid, t);
+    	for (int i = 0; i < dirtied.size();i++){
+    		Page dirty = dirtied.get(i);
+    		dirty.markDirty(true, tid);
+    	}
     }
 
     /**
@@ -184,6 +188,7 @@ public class BufferPool {
     				Page dirtyPage = dirty.next();
     				PageId pid = dirtyPage.getId();
     				this.pages.put(pid, dirtyPage);
+    				dirtyPage.markDirty(true, tid);
     			}
     			return;
     		}

@@ -115,7 +115,7 @@ public class HeapFile implements DbFile {
         	HeapPage hp = (HeapPage) bp.getPage(tid, pid, Permissions.READ_ONLY);
         	if (hp.getNumEmptySlots()>0){
         		hp.insertTuple(t);
-        		hp.markDirty(true, tid);
+        		//hp.markDirty(true, tid);
         		result.add(hp);
         		return result;
         	}
@@ -124,7 +124,7 @@ public class HeapFile implements DbFile {
         byte[] data = HeapPage.createEmptyPageData();
         HeapPage newPage = new HeapPage(newId,data);
         newPage.insertTuple(t);
-        newPage.markDirty(true, tid);
+        //newPage.markDirty(true, tid);
         OutputStream writer = new BufferedOutputStream(new FileOutputStream(this.file,true));
         writer.write(newPage.getPageData());
         writer.close();
@@ -138,7 +138,7 @@ public class HeapFile implements DbFile {
         PageId pid = t.getRecordId().getPageId();
         HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_ONLY);
         page.deleteTuple(t);
-        page.markDirty(true, tid);
+        //page.markDirty(true, tid);
         ArrayList<Page> result = new ArrayList<Page>();
         result.add(page);
         return result;
