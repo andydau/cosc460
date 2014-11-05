@@ -1,18 +1,25 @@
 Your name(s): 
 
 1. Explain how you modified SynchronizedThreads in exercise 1.
+I added a keyword synchronized for the object counter before running the Imcrementer. This makes sure that a thread has to finish modifying the counter object before another class can access it.
 
 2. Briefly describe (1-2 sentences) an alternate implementation for exercise 1.
+You could also add the keyword synchonized to the method increment of the class Counter. This will ensure that a thread will have to finish using the Counter object before another thread can start.
 
 3. Exercise 2: Explain the deadlock that happens in Deadlock in terms of locks and threads waiting on locks. The two threads in this case are alphonse and gaston. 
 
 a) What objects are being locked? 
+Both objects are locked.
 
-b) Who has what locks? 
+b) Who has what locks?
+Alphonse holds the lock to itself and Gaston also holds the locks to itself.
 
 c) How does deadlock occur?
+Both object requires the lock to the other object to execute the last line and finish the method. However, both objects is holding its own lock and both ending up waiting for the other one to release the lock (deadlock).
 
 4. Return to exercise 1, can deadlock occur here?  Explain why or why not.
+No because the threads in one does not require a lock to any of the other threads in order to finish executing.
 
 5. Explain why acquireLock uses a synchronized statement inside the body of the method. In other words, why not just make the acquireLock method synchronized, just like releaseLock? Will this work? Why or why not?
+If we synchronized the whole method, that means that when threads call the acquire method, it is possible for a thread to call the method when another thread is incrementing and this thread will enter the waiting loop. Because the whole method is synchronized and the release method is also lock with the same intrisic lock, no other method can come in and change the value of inuse and as a result one thread can wait forever and not allowing any other thread to execute.
 	

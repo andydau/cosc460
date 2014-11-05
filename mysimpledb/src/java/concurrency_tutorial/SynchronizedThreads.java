@@ -11,8 +11,8 @@ public class SynchronizedThreads {
      */
     public static void main(String args[]) throws InterruptedException {
         Counter counter = new Counter();
-        int numThreads = 10;
-        int numAdds = 15;
+        int numThreads = 100;
+        int numAdds = 78;
         for (int i = 0; i < numThreads; i++) {
             new Thread(new Incrementer(counter, numAdds, i+1)).start();
         }
@@ -45,9 +45,11 @@ public class SynchronizedThreads {
 
         public void run() {
             // increment the counter numIncrements times
-            for (int i = 0; i < numIncrements; i++) {
-                counter.increment(name);
-            }
+        	synchronized (counter){
+        		for (int i = 0; i < numIncrements; i++) {
+        			counter.increment(name);
+        		}
+        	}
         }
     }
 
