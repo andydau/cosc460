@@ -27,6 +27,9 @@ public class BufferPool {
     public static final int PAGE_SIZE = 4096;
 
     private static int pageSize = PAGE_SIZE;
+    
+    private static final LockManager lm = new LockManager();
+    public static LockManager getLockManager() { return lm; }
 
     /**
      * Default number of pages passed to the constructor. This is used by
@@ -80,18 +83,21 @@ public class BufferPool {
 			this.order.remove(pid);
 		}
     	this.order.push(pid);
+    	lm.acquireLock(pid, tid);
     	Page result = this.pages.get(pid);
-        if (result!=null){
-        	return result;
-        }
-    	if (this.pages.size()>=this.maxSize){
-    		this.evictPage();	
+   		if (result!=null){
+   			lm.releaseLock(pid);
+   			return result;
+   		}
+   		if (this.pages.size()>=this.maxSize){
+   			this.evictPage();	
     	}
     	int tableId = pid.getTableId();
-		DbFile table = Database.getCatalog().getDatabaseFile(tableId);
-		Page newPage = table.readPage(pid);
-		this.pages.put(pid, newPage);
-		return newPage;
+   		DbFile table = Database.getCatalog().getDatabaseFile(tableId);
+   		Page newPage = table.readPage(pid);
+   		this.pages.put(pid, newPage);
+   		lm.releaseLock(pid);
+   		return newPage;
     }
 
     /**
@@ -104,8 +110,7 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void releasePage(TransactionId tid, PageId pid) {
-        // some code goes here
-        // not necessary for lab1|lab2|lab3|lab4                                                         // cosc460
+        lm.releaseLock(pid);                                                         // cosc460
     }
 
     /**
@@ -120,10 +125,10 @@ public class BufferPool {
     /**
      * Return true if the specified transaction has a lock on the specified page
      */
-    public boolean holdsLock(TransactionId tid, PageId p) {
+    public boolean holdsLock(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for lab1|lab2|lab3|lab4                                                         // cosc460
-        return false;
+        return lm.hasLock(pid, tid);
     }
 
     /**
