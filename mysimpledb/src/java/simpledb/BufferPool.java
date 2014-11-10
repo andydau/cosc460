@@ -28,8 +28,8 @@ public class BufferPool {
 
     private static int pageSize = PAGE_SIZE;
     
-    private static final LockManager lm = new LockManager();
-    public static LockManager getLockManager() { return lm; }
+    private LockManager lm;
+    public LockManager getLockManager() { return lm; }
 
     /**
      * Default number of pages passed to the constructor. This is used by
@@ -52,6 +52,7 @@ public class BufferPool {
     	this.pages = new Hashtable<PageId,Page>();
         this.maxSize = numPages;
         this.order = new LinkedList<PageId>();
+        this.lm = new LockManager();
     }
 
     public static int getPageSize() {
@@ -83,10 +84,9 @@ public class BufferPool {
 			this.order.remove(pid);
 		}
     	this.order.push(pid);
-    	lm.acquireLock(pid, tid);
     	Page result = this.pages.get(pid);
    		if (result!=null){
-   			lm.releaseLock(pid);
+   			lm.acquireLock(pid, tid, perm);
    			return result;
    		}
    		if (this.pages.size()>=this.maxSize){
@@ -96,7 +96,7 @@ public class BufferPool {
    		DbFile table = Database.getCatalog().getDatabaseFile(tableId);
    		Page newPage = table.readPage(pid);
    		this.pages.put(pid, newPage);
-   		lm.releaseLock(pid);
+   		lm.acquireLock(pid, tid, perm);
    		return newPage;
     }
 
@@ -110,7 +110,7 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void releasePage(TransactionId tid, PageId pid) {
-        lm.releaseLock(pid);                                                         // cosc460
+        lm.releaseLock(tid, pid);                                                         // cosc460
     }
 
     /**

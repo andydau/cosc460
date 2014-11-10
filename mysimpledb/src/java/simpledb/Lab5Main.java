@@ -15,7 +15,7 @@ public class Lab5Main {
         // loads the imdb database because each table is big enough to have multiple pages
         Database.getCatalog().loadSchema("imdb.schema");             // file imdb.schema must be in mysimpledb directory
 
-        Lab5Util.runTransactions(new T1(), new T2());
+        Lab5Util.runTransactions(new T1());
     }
 
     static class T1 extends SimpleDBTransactionThread {
@@ -25,11 +25,11 @@ public class Lab5Main {
             int table = Database.getCatalog().getTableId("Actor");
             PageId p0 = new HeapPageId(table, 0);
             PageId p1 = new HeapPageId(table, 1);
-            Database.getBufferPool().getPage(tid, p0, Permissions.READ_WRITE);
+            Database.getBufferPool().getPage(tid, p0, Permissions.READ_ONLY);
             try {
                 Thread.sleep(5);              // pause to encourage deadlock
             } catch (InterruptedException ignored) { }
-            Database.getBufferPool().getPage(tid, p1, Permissions.READ_WRITE);
+            Database.getBufferPool().getPage(tid, p0, Permissions.READ_WRITE);
             System.out.println("got both locks " + tid);
         }
     }
@@ -45,8 +45,7 @@ public class Lab5Main {
             try {
                 Thread.sleep(5);             // pause to encourage deadlock
             } catch (InterruptedException ignored) { }
-            Database.getBufferPool().getPage(tid, p0, Permissions.READ_WRITE);
-            System.out.println("got both locks " + tid);
+            Database.getBufferPool().getPage(tid, p0, Permissions.READ_ONLY);
         }
     }
 
