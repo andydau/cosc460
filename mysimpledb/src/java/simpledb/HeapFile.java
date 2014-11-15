@@ -114,29 +114,34 @@ public class HeapFile implements DbFile {
         	HeapPageId pid = new HeapPageId(this.getId(),i);
         	HeapPage hp = (HeapPage) bp.getPage(tid, pid, Permissions.READ_ONLY);
         	if (hp.getNumEmptySlots()>0){
+        		hp = (HeapPage) bp.getPage(tid, pid, Permissions.READ_WRITE);
         		hp.insertTuple(t);
         		//hp.markDirty(true, tid);
         		result.add(hp);
         		return result;
         	}
+        	bp.releasePage(tid, pid);
         }
-        HeapPageId newId = new HeapPageId(this.getId(),this.numPages());
-        byte[] data = HeapPage.createEmptyPageData();
-        HeapPage newPage = new HeapPage(newId,data);
-        newPage.insertTuple(t);
-        //newPage.markDirty(true, tid);
-        OutputStream writer = new BufferedOutputStream(new FileOutputStream(this.file,true));
-        writer.write(newPage.getPageData());
-        writer.close();
-        result.add(newPage);
-        return result;
+        synchronized (this){
+        	HeapPageId newId = new HeapPageId(this.getId(),this.numPages());
+        	byte[] data = HeapPage.createEmptyPageData();
+        	HeapPage newPage = new HeapPage(newId,data);
+        	newPage.insertTuple(t);
+        	//newPage.markDirty(true, tid);
+        	OutputStream writer = new BufferedOutputStream(new FileOutputStream(this.file,true));
+        	writer.write(newPage.getPageData());
+        	writer.close();
+        	newPage = (HeapPage) bp.getPage(tid, newId, Permissions.READ_ONLY);
+        	result.add(newPage);
+        	return result;
+        }
     }
 
     // see DbFile.java for javadocs
     public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException,
             TransactionAbortedException {
         PageId pid = t.getRecordId().getPageId();
-        HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_ONLY);
+        HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
         page.deleteTuple(t);
         //page.markDirty(true, tid);
         ArrayList<Page> result = new ArrayList<Page>();

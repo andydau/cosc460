@@ -1,15 +1,16 @@
 package simpledb;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class LockManager {
-	private ConcurrentHashMap<PageId,TransactionId> xmap;
-	private ConcurrentHashMap<PageId,ArrayList<TransactionId>> smap;
+	private HashMap<PageId,TransactionId> xmap;
+	private HashMap<PageId,ArrayList<TransactionId>> smap;
 
 	public LockManager(){
-		xmap = new ConcurrentHashMap<PageId,TransactionId>();
-		smap = new ConcurrentHashMap<PageId,ArrayList<TransactionId>>();
+		xmap = new HashMap<PageId,TransactionId>();
+		smap = new HashMap<PageId,ArrayList<TransactionId>>();
 	}
     public synchronized void acquireLock(PageId pid, TransactionId tid, Permissions perm) {
         boolean waiting = true;
@@ -22,11 +23,13 @@ public class LockManager {
             			waiting = false;
             		}
             		else{
-            			for (TransactionId id : smap.get(pid)){
+            			ArrayList<TransactionId> tids = smap.get(pid);
+            			for (TransactionId id : tids){
             				if (id.equals(tid)){
             					if (this.upgradable(pid, tid)){
             						this.upgrade(pid, tid);
             						waiting = false;
+            						break;
             					}
             				}
             			}
@@ -62,7 +65,9 @@ public class LockManager {
             if (waiting) {
                 try {
                 	wait();
-                } catch (InterruptedException ignored) { }
+                } catch (InterruptedException ignored) {
+                	break;
+                }
             }
         }
     }

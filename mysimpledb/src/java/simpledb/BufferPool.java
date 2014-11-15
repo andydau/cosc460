@@ -119,8 +119,7 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      */
     public void transactionComplete(TransactionId tid) throws IOException {
-        // some code goes here
-        // not necessary for lab1|lab2|lab3|lab4                                                         // cosc460
+    	transactionComplete(tid, true);
     }
     /**
      * Return true if the specified transaction has a lock on the specified page
@@ -140,8 +139,27 @@ public class BufferPool {
      */
     public void transactionComplete(TransactionId tid, boolean commit)
             throws IOException {
-        // some code goes here
-        // not necessary for lab1|lab2|lab3|lab4                                                         // cosc460
+    	if (commit){
+    		flushPages(tid);
+    	}
+    	else{
+    		for (PageId pageId : this.pages.keySet()){
+    			Page page = this.pages.get(pageId);
+    			if (page.isDirty()==null){
+    				continue;
+    			}
+    			if (page.isDirty().equals(tid)){
+    				page = page.getBeforeImage();
+    				this.pages.put(pageId, page);
+    			}
+    		}
+    	}
+    	for (PageId pageId : this.pages.keySet()){
+    		if (holdsLock(tid,pageId)){
+    			releasePage(tid,pageId);
+    		}
+    	}
+    	//Thread.currentThread().interrupt();
     }
 
     /**
@@ -210,9 +228,13 @@ public class BufferPool {
      * break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        for (PageId pid : this.pages.keySet()){
-        	this.flushPage(pid);
-        }
+    	PageId[] pids = (PageId[]) this.pages.keySet().toArray(new PageId[this.pages.size()]);
+    	for (PageId pid : pids){
+    		Page page = this.pages.get(pid);
+    		if (page.isDirty()!=null){
+    			flushPage(pid);
+    		}
+    	}
     }
 
     /**
@@ -239,14 +261,23 @@ public class BufferPool {
     	DbFile table = Database.getCatalog().getDatabaseFile(pid.getTableId());
     	Page page = this.pages.get(pid);
     	table.writePage(page);
+    	this.pages.remove(page.getId());
     }
 
     /**
      * Write all pages of the specified transaction to disk.
      */
     public synchronized void flushPages(TransactionId tid) throws IOException {
-        // some code goes here
-        // not necessary for lab1|lab2|lab3|lab4                                                         // cosc460
+        for (PageId pageId : this.pages.keySet()){
+        	Page page = this.pages.get(pageId);
+        	if (page.isDirty()==null){
+        		continue;
+        	}
+        	if (page.isDirty().equals(tid)){
+        		flushPage(pageId);
+        		page.markDirty(false, tid);
+        	}
+        }
     }
 
     /**
@@ -254,15 +285,23 @@ public class BufferPool {
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     private synchronized void evictPage() throws DbException{
-        PageId dirtyId = this.order.removeLast();
-        try{
-        	this.flushPage(dirtyId);
-        }
-        catch (IOException e){
-        	e.printStackTrace();
-        	return;
-        }
-        this.discardPage(dirtyId);
+    	for (int i = this.order.size()-1; i>=0;i--)
+    	{
+    		PageId evictId = this.order.get(i);
+    		try{
+    			Page page = this.pages.get(evictId);
+    			if (page.isDirty()==null){
+    				this.flushPage(evictId);
+    				this.order.remove(i);
+    				return;
+    			}
+    		}
+    		catch (IOException e){
+    			e.printStackTrace();
+    			continue;
+    		}
+    	}
+    	throw new DbException("All pages are dirty");
     }
 
 }
