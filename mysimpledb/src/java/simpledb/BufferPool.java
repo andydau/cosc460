@@ -79,7 +79,8 @@ public class BufferPool {
      * @param pid  the ID of the requested page
      * @param perm the requested permissions on the page
      */
-    public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws DbException{
+    public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws 
+    		DbException, TransactionAbortedException{
     	if (this.order.contains(pid)){
 			this.order.remove(pid);
 		}
@@ -140,6 +141,7 @@ public class BufferPool {
     public void transactionComplete(TransactionId tid, boolean commit)
             throws IOException {
     	if (commit){
+    		System.out.println("commit");
     		flushPages(tid);
     	}
     	else{
@@ -154,11 +156,8 @@ public class BufferPool {
     			}
     		}
     	}
-    	for (PageId pageId : this.pages.keySet()){
-    		if (holdsLock(tid,pageId)){
-    			releasePage(tid,pageId);
-    		}
-    	}
+    	lm.releaseLock(tid);
+    	lm.removeFromGraph(tid);
     	//Thread.currentThread().interrupt();
     }
 
@@ -290,8 +289,12 @@ public class BufferPool {
     		PageId evictId = this.order.get(i);
     		try{
     			Page page = this.pages.get(evictId);
+    			if (page==null){
+    				throw new DbException("all pages dirty");
+    			}
     			if (page.isDirty()==null){
     				this.flushPage(evictId);
+    				this.pages.remove(evictId);
     				this.order.remove(i);
     				return;
     			}

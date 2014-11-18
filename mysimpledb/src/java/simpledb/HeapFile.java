@@ -120,7 +120,6 @@ public class HeapFile implements DbFile {
         		result.add(hp);
         		return result;
         	}
-        	bp.releasePage(tid, pid);
         }
         synchronized (this){
         	HeapPageId newId = new HeapPageId(this.getId(),this.numPages());

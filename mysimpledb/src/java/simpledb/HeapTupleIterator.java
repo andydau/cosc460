@@ -20,11 +20,11 @@ public class HeapTupleIterator implements DbFileIterator {
 		this.maxPage = file.numPages();
 	};
 	
-	public void openPage(int pageNo) throws DbException{
+	public void openPage(int pageNo) throws DbException, TransactionAbortedException{
 		open = true;
 		int tableId = file.getId();
 		PageId pid = new HeapPageId(tableId, pageNo);
-		HeapPage page = (HeapPage) bp.getPage(tid, pid, Permissions.READ_ONLY);
+		HeapPage page = (HeapPage) bp.getPage(tid, pid, Permissions.READ_WRITE);
 		currentIt = page.iterator();
 	}
 	
