@@ -73,8 +73,7 @@ public class LockManager {
             }
             if (waiting) {
                 try {
-                	System.out.println(tid+" "+xmap.get(pid));
-                	wgraph.printEdges();
+                	//wgraph.printEdges();
                 	ArrayList<TransactionId> waits = new ArrayList<TransactionId>();
                 	if (xmap.containsKey(pid)){
                 		waits.add(xmap.get(pid));

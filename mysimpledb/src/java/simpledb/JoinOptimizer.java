@@ -171,7 +171,6 @@ public class JoinOptimizer {
         
         int result = Math.max(num1, num2);
         result = (card1*card2)/result;
-        System.out.println(card1+" "+num1+" "+card2+" "+num2+" "+result);
         if (result ==0){
         	result = 1;
         }
@@ -189,9 +188,6 @@ public class JoinOptimizer {
         	if (result>minKey){
         		result = minKey;
         	}
-        }
-        if (result == 1){
-        	System.out.println(t1pkey+" "+t2pkey);
         }
         return result;
     }
@@ -325,7 +321,6 @@ public class JoinOptimizer {
     			double bestCost = Double.MAX_VALUE;
     			for (int j = 0; j<bs.length;j++){
     				LogicalJoinNode joinToRemove = this.joins.get(bs[j]);
-    				System.out.println(joinToRemove);
     				CostCard cc = computeCostAndCardOfSubplan(stats, filterSelectivities, 
                           joinToRemove, hs, bestCost,pc);
     				if (cc==null){

@@ -24,7 +24,7 @@ public class HeapTupleIterator implements DbFileIterator {
 		open = true;
 		int tableId = file.getId();
 		PageId pid = new HeapPageId(tableId, pageNo);
-		HeapPage page = (HeapPage) bp.getPage(tid, pid, Permissions.READ_WRITE);
+		HeapPage page = (HeapPage) bp.getPage(tid, pid, Permissions.READ_ONLY);
 		currentIt = page.iterator();
 	}
 	
