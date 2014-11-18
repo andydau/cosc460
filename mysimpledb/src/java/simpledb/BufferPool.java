@@ -1,11 +1,13 @@
 package simpledb;
 
 import java.io.*;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ArrayList;
+import java.util.Set;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -267,7 +269,8 @@ public class BufferPool {
      * Write all pages of the specified transaction to disk.
      */
     public synchronized void flushPages(TransactionId tid) throws IOException {
-        for (PageId pageId : this.pages.keySet()){
+    	Set<PageId> temp = new HashSet<PageId>(this.pages.keySet());
+        for (PageId pageId : temp){
         	Page page = this.pages.get(pageId);
         	if (page.isDirty()==null){
         		continue;
