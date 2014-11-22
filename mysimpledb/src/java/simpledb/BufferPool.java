@@ -83,13 +83,13 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm) throws 
     		DbException, TransactionAbortedException{
+    	lm.acquireLock(pid, tid, perm);
     	if (this.order.contains(pid)){
 			this.order.remove(pid);
 		}
     	this.order.push(pid);
     	Page result = this.pages.get(pid);
    		if (result!=null){
-   			lm.acquireLock(pid, tid, perm);
    			return result;
    		}
    		if (this.pages.size()>=this.maxSize){
@@ -99,7 +99,6 @@ public class BufferPool {
    		DbFile table = Database.getCatalog().getDatabaseFile(tableId);
    		Page newPage = table.readPage(pid);
    		this.pages.put(pid, newPage);
-   		lm.acquireLock(pid, tid, perm);
    		return newPage;
     }
 
@@ -121,7 +120,7 @@ public class BufferPool {
      *
      * @param tid the ID of the transaction requesting the unlock
      */
-    public void transactionComplete(TransactionId tid) throws IOException {
+    public void transactionComplete(TransactionId tid) throws IOException,TransactionAbortedException {
     	transactionComplete(tid, true);
     }
     /**
@@ -141,9 +140,9 @@ public class BufferPool {
      * @param commit a flag indicating whether we should commit or abort
      */
     public void transactionComplete(TransactionId tid, boolean commit)
-            throws IOException {
+            throws IOException,TransactionAbortedException {
     	if (commit){
-    		System.out.println("commit");
+    		//System.out.println("commit");
     		flushPages(tid);
     	}
     	else{
@@ -158,8 +157,8 @@ public class BufferPool {
     			}
     		}
     	}
-    	lm.releaseLock(tid);
     	lm.removeFromGraph(tid);
+    	lm.releaseLock(tid);
     	//Thread.currentThread().interrupt();
     }
 
@@ -202,24 +201,43 @@ public class BufferPool {
     public void deleteTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
     	Catalog cat = Database.getCatalog();
-    	Iterator<Integer> it = cat.tableIdIterator();
-    	while (it.hasNext()){
-    		int tableId = it.next();
-    		DbFile table = cat.getDatabaseFile(tableId);
-    		try{
-    			Iterator<Page> dirty = table.deleteTuple(tid, t).iterator();
-    			while (dirty.hasNext()){
-    				Page dirtyPage = dirty.next();
-    				PageId pid = dirtyPage.getId();
-    				this.pages.put(pid, dirtyPage);
-    				dirtyPage.markDirty(true, tid);
-    			}
-    			return;
-    		}
-    		catch (DbException e){
-    			continue;
-    		}
+    	RecordId rid = t.getRecordId();
+    	int tableId = rid.getPageId().getTableId();
+    	if (!this.pages.containsKey(rid.getPageId())){
+    		throw new DbException("can't find tuple");
     	}
+//    	Iterator<Integer> it = cat.tableIdIterator();
+//    	while (it.hasNext()){
+//    		int tableId = it.next();
+//    		DbFile table = cat.getDatabaseFile(tableId);
+//    		try{
+//    			Iterator<Page> dirty = table.deleteTuple(tid, t).iterator();
+//    			while (dirty.hasNext()){
+//    				Page dirtyPage = dirty.next();
+//    				PageId pid = dirtyPage.getId();
+//    				this.pages.put(pid, dirtyPage);
+//    				dirtyPage.markDirty(true, tid);
+//    			}
+//    			return;
+//    		}
+//    		catch (DbException e){
+//    			continue;
+//    		}
+//    	}
+    	DbFile table = cat.getDatabaseFile(tableId);
+		try{
+			Iterator<Page> dirty = table.deleteTuple(tid, t).iterator();
+			while (dirty.hasNext()){
+				Page dirtyPage = dirty.next();
+				PageId pid = dirtyPage.getId();
+				this.pages.put(pid, dirtyPage);
+				dirtyPage.markDirty(true, tid);
+			}
+			return;
+		}
+		catch (DbException e){
+			e.printStackTrace();
+		}
     	throw new DbException("can't find tuple");
     }
 
@@ -262,6 +280,7 @@ public class BufferPool {
     	DbFile table = Database.getCatalog().getDatabaseFile(pid.getTableId());
     	Page page = this.pages.get(pid);
     	table.writePage(page);
+    	System.out.println("Flushed "+pid);
     	this.pages.remove(page.getId());
     }
 

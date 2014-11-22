@@ -116,10 +116,11 @@ public class HeapFile implements DbFile {
         	if (hp.getNumEmptySlots()>0){
         		hp = (HeapPage) bp.getPage(tid, pid, Permissions.READ_WRITE);
         		hp.insertTuple(t);
-        		//hp.markDirty(true, tid);
+        		hp.markDirty(true, tid);
         		result.add(hp);
         		return result;
         	}
+        	bp.releasePage(tid, pid);
         }
         synchronized (this){
         	HeapPageId newId = new HeapPageId(this.getId(),this.numPages());

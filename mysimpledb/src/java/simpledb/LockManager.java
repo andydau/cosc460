@@ -37,6 +37,7 @@ public class LockManager {
             				if (tids.contains(tid)){
             					if (this.upgradable(pid, tid)){
             						this.upgrade(pid, tid);
+            						System.out.println(tid + "out at line 40");
             						waiting = false;
             						break;
             					}
@@ -46,6 +47,7 @@ public class LockManager {
             	}
             	else{
             		if (xmap.get(pid).equals(tid)){
+            			System.out.println(tid + "out at line 50");
             			waiting = false;
             		}
             	}
@@ -63,10 +65,12 @@ public class LockManager {
             			list.add(tid);
             			smap.put(pid, list);
             		}
+            		System.out.println(tid + "out at line 68");
             		waiting = false;
             	}
             	else{
             		if (xmap.get(pid).equals(tid)){
+            			System.out.println(tid + "out at line 73");
             			waiting = false;
             		}
             	}
@@ -78,15 +82,22 @@ public class LockManager {
                 	if (xmap.containsKey(pid)){
                 		waits.add(xmap.get(pid));
                 	}
-                	if (smap.containsKey(pid)){
+                	if ((smap.containsKey(pid))&&(perm.equals(Permissions.READ_WRITE))){
                 		waits.addAll(smap.get(pid));
                 	}
                 	for (int i = 0; i < waits.size();i++){
                 		TransactionId current = waits.get(i);
+                		if (current.equals(tid)){
+                			continue;
+                		}
                 		if (wgraph.checkCycle(tid, current)){
                 			BufferPool bp = Database.getBufferPool();
             				bp.transactionComplete(tid, false);
-            				throw new TransactionAbortedException();
+            				System.out.println("Aborting: "+tid);
+                			throw new TransactionAbortedException();
+                			//abort everything else
+                			//System.out.println(current);
+            				//bp.transactionComplete(current,false);
                 		}
                 	}
                 	for (int i = 0; i < waits.size();i++){
@@ -94,6 +105,7 @@ public class LockManager {
                 		wgraph.addEdge(tid, current);
                 	}
                 	wait();
+                	//waiting = false;
                 } catch (InterruptedException ignored) {
                 	break;
                 } catch (IOException e){
