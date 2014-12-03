@@ -96,6 +96,39 @@ class LogFileRecovery {
         readOnlyLog.seek(readOnlyLog.length()); // undoing so move to end of logfile
 
         // some code goes here
+        long pointer = readOnlyLog.length();
+        boolean begin = false;
+        while (!begin){
+        	pointer = pointer - LogFile.LONG_SIZE;
+        	readOnlyLog.seek(pointer);
+        	pointer = readOnlyLog.readLong();
+        	readOnlyLog.seek(pointer);
+        	int type = readOnlyLog.readInt();
+        	if (type==LogType.BEGIN_RECORD){
+        		long tid = readOnlyLog.readLong();
+        		if (tid == tidToRollback.getId()){
+        			begin = true;
+        			continue;
+        		}
+        	}
+        	if (type==LogType.COMMIT_RECORD){
+        		long tid = readOnlyLog.readLong();
+        		if (tid == tidToRollback.getId()){
+        			throw new IOException();
+        		}
+        	}
+        	if (type==LogType.UPDATE_RECORD){
+        		long tid = readOnlyLog.readLong();
+        		if (tid == tidToRollback.getId()){
+        			Page p = Database.getLogFile().readPageData(readOnlyLog);
+        			Page before = p.getBeforeImage();
+        			int tableid = p.getId().getTableId();
+        			HeapFile table = (HeapFile) Database.getCatalog().getDatabaseFile(tableid);
+        			table.writePage(before);
+        			Database.getBufferPool().removePage(p.getId());
+        		}
+        	}
+        }
     }
 
     /**

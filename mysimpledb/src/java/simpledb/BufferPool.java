@@ -143,6 +143,15 @@ public class BufferPool {
             throws IOException {
     	if (commit){
     		//System.out.println("commit");
+    		for (PageId pageId : this.pages.keySet()){
+    			Page page = this.pages.get(pageId);
+    			if (page.isDirty()==null){
+    				continue;
+    			}
+    			if (page.isDirty().equals(tid)){
+    				page.setBeforeImage();
+    			}
+    		}
     		flushPages(tid);
     	}
     	else{
@@ -279,8 +288,13 @@ public class BufferPool {
     private synchronized void flushPage(PageId pid) throws IOException {
     	DbFile table = Database.getCatalog().getDatabaseFile(pid.getTableId());
     	Page page = this.pages.get(pid);
+    	TransactionId dirtier = page.isDirty();
+        if (dirtier != null){
+          Database.getLogFile().logWrite(dirtier, page.getBeforeImage(), page);
+          Database.getLogFile().force();
+        }
     	table.writePage(page);
-    	System.out.println("Flushed "+pid);
+    	//System.out.println("Flushed "+pid);
     	this.pages.remove(page.getId());
     }
 
@@ -299,6 +313,12 @@ public class BufferPool {
         		page.markDirty(false, tid);
         	}
         }
+    }
+    
+    public synchronized void removePage(PageId pid){
+    	if (this.pages.containsKey(pid)){
+    		this.pages.remove(pid);
+    	}
     }
 
     /**

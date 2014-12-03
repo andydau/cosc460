@@ -37,7 +37,7 @@ public class LockManager {
             				if (tids.contains(tid)){
             					if (this.upgradable(pid, tid)){
             						this.upgrade(pid, tid);
-            						System.out.println(tid + "out at line 40");
+            						//System.out.println(tid + "out at line 40");
             						waiting = false;
             						break;
             					}
@@ -47,7 +47,7 @@ public class LockManager {
             	}
             	else{
             		if (xmap.get(pid).equals(tid)){
-            			System.out.println(tid + "out at line 50");
+            			//System.out.println(tid + "out at line 50");
             			waiting = false;
             		}
             	}
@@ -65,12 +65,12 @@ public class LockManager {
             			list.add(tid);
             			smap.put(pid, list);
             		}
-            		System.out.println(tid + "out at line 68");
+            		//System.out.println(tid + "out at line 68");
             		waiting = false;
             	}
             	else{
             		if (xmap.get(pid).equals(tid)){
-            			System.out.println(tid + "out at line 73");
+            			//System.out.println(tid + "out at line 73");
             			waiting = false;
             		}
             	}
@@ -93,7 +93,7 @@ public class LockManager {
                 		if (wgraph.checkCycle(tid, current)){
                 			BufferPool bp = Database.getBufferPool();
             				bp.transactionComplete(tid, false);
-            				System.out.println("Aborting: "+tid);
+            				//System.out.println("Aborting: "+tid);
                 			throw new TransactionAbortedException();
                 			//abort everything else
                 			//System.out.println(current);
