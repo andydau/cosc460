@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.IOException;
+import java.io.EOFException;
 import java.io.RandomAccessFile;
 import java.util.HashSet;
 import java.util.Set;
@@ -140,8 +141,16 @@ class LogFileRecovery {
      * the BufferPool are locked.
      */
     public void recover() throws IOException {
-
-        // some code goes here
-
+    	readOnlyLog.seek(0);
+    	long pointer = readOnlyLog.readLong();
+    	if (pointer!=-1){
+    		readOnlyLog.seek(pointer);
+    	}
+    	try{
+    		
+    	}
+    	catch (EOFException e){
+    		System.out.println("End of log");
+    	}
     }
 }
