@@ -140,7 +140,7 @@ public class BufferPool {
      * @param commit a flag indicating whether we should commit or abort
      */
     public void transactionComplete(TransactionId tid, boolean commit)
-            throws IOException,TransactionAbortedException {
+            throws IOException {
     	if (commit){
     		//System.out.println("commit");
     		flushPages(tid);
