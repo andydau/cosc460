@@ -3,6 +3,7 @@ package simpledb;
 import java.io.IOException;
 import java.io.EOFException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -121,15 +122,17 @@ class LogFileRecovery {
         	if (type==LogType.UPDATE_RECORD){
         		long tid = readOnlyLog.readLong();
         		if (tid == tidToRollback.getId()){
-        			Page p = Database.getLogFile().readPageData(readOnlyLog);
-        			Page before = p.getBeforeImage();
-        			int tableid = p.getId().getTableId();
+        			Page before = Database.getLogFile().readPageData(readOnlyLog);
+        			Page after = Database.getLogFile().readPageData(readOnlyLog);
+        			int tableid = before.getId().getTableId();
         			HeapFile table = (HeapFile) Database.getCatalog().getDatabaseFile(tableid);
         			table.writePage(before);
-        			Database.getBufferPool().removePage(p.getId());
+        			Database.getLogFile().logCLR(tid, before);
+        			Database.getBufferPool().removePage(after.getId());
         		}
         	}
         }
+        Database.getLogFile().logAbort(tidToRollback.getId());;
     }
 
     /**
@@ -141,16 +144,92 @@ class LogFileRecovery {
      * the BufferPool are locked.
      */
     public void recover() throws IOException {
+    	this.print();
     	readOnlyLog.seek(0);
     	long pointer = readOnlyLog.readLong();
+    	ArrayList<Long> losers = new ArrayList<Long>();
     	if (pointer!=-1){
     		readOnlyLog.seek(pointer);
+    		readOnlyLog.readInt();
+    		readOnlyLog.readLong();
+    		int noTransaction = readOnlyLog.readInt();
+    		for (int i = 0; i < noTransaction; i++){
+    			losers.add(readOnlyLog.readLong());
+    		}
+    		readOnlyLog.readLong();
     	}
-    	try{
-    		
+    	while (true){
+    		try{
+    			int type = readOnlyLog.readInt();
+    			if (type==LogType.BEGIN_RECORD){
+    				long longid = readOnlyLog.readLong();
+    				losers.add(longid);
+    				
+    			}
+    			if (type==LogType.UPDATE_RECORD){
+    				long tid = readOnlyLog.readLong();
+    				Page before = Database.getLogFile().readPageData(readOnlyLog);
+    				Page after = Database.getLogFile().readPageData(readOnlyLog);
+    				int tableid = before.getId().getTableId();
+    				HeapFile table = (HeapFile) Database.getCatalog().getDatabaseFile(tableid);
+    				table.writePage(after);
+    			}
+    			if (type==LogType.CLR_RECORD){
+    				long tid = readOnlyLog.readLong();
+    				Page p = Database.getLogFile().readPageData(readOnlyLog);
+    				int tableid = p.getId().getTableId();
+    				HeapFile table = (HeapFile) Database.getCatalog().getDatabaseFile(tableid);
+    				table.writePage(p);
+    			}
+    			if (type==LogType.COMMIT_RECORD){
+    				long longid = readOnlyLog.readLong();
+    				losers.remove(longid);
+    			}
+    			if (type==LogType.ABORT_RECORD){
+    				long longid = readOnlyLog.readLong();
+    				losers.remove(longid);
+    			}
+    			readOnlyLog.readLong();
+    		}
+    		catch (EOFException e){
+    			System.out.println("End of log");
+    			break;
+    		}
     	}
-    	catch (EOFException e){
-    		System.out.println("End of log");
-    	}
+    	readOnlyLog.seek(readOnlyLog.length());
+    	pointer = readOnlyLog.length();
+    	boolean begin = false;
+    	ArrayList<Long> undone = new ArrayList<Long>();
+        while (losers.size()>0){
+        	pointer = pointer - LogFile.LONG_SIZE;
+        	readOnlyLog.seek(pointer);
+        	pointer = readOnlyLog.readLong();
+        	readOnlyLog.seek(pointer);
+        	int type = readOnlyLog.readInt();
+        	if (type == LogType.CHECKPOINT_RECORD){
+        		continue;
+        	}
+        	if (type==LogType.UPDATE_RECORD){
+        		long tid = readOnlyLog.readLong();
+        		if (losers.contains(tid)){
+        			Page before = Database.getLogFile().readPageData(readOnlyLog);
+        			Page after = Database.getLogFile().readPageData(readOnlyLog);
+    				int tableid = before.getId().getTableId();
+    				HeapFile table = (HeapFile) Database.getCatalog().getDatabaseFile(tableid);
+    				table.writePage(before);
+    				Database.getLogFile().logCLR(tid,before);
+        		}
+        	}
+        	if (type==LogType.BEGIN_RECORD){
+        		long tid = readOnlyLog.readLong();
+        		if (losers.contains(tid)){
+        			losers.remove(tid);
+        			undone.add(tid);
+        		}
+        	}
+        }
+        for (Long tid : undone){
+        	Database.getLogFile().logAbort(tid);
+        }
     }
 }
