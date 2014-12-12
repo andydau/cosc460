@@ -152,7 +152,7 @@ public class BufferPool {
     				page.setBeforeImage();
     			}
     		}
-    		flushPages(tid);
+    		//flushPages(tid);
     	}
     	else{
     		for (PageId pageId : this.pages.keySet()){
@@ -161,7 +161,7 @@ public class BufferPool {
     				continue;
     			}
     			if (page.isDirty().equals(tid)){
-    				page = page.getBeforeImage();
+    				//page = page.getBeforeImage();
     				this.pages.put(pageId, page);
     			}
     		}
@@ -334,12 +334,12 @@ public class BufferPool {
     			if (page==null){
     				throw new DbException("all pages dirty");
     			}
-    			if (page.isDirty()==null){
+    			//if (page.isDirty()==null){
     				this.flushPage(evictId);
     				this.pages.remove(evictId);
     				this.order.remove(i);
     				return;
-    			}
+    			//}
     		}
     		catch (IOException e){
     			e.printStackTrace();
