@@ -32,32 +32,31 @@ In answering the next few questions, oncy include method calls in the source cod
 
 6. Where is BufferPool.flushAllPages called?
 
-    It is called when a checkpoint is called 
+    It is called when a checkpoint is recorded.
 
 7. To support a NO FORCE, STEAL policy, describe exactly when/where pages should be flushed to disk.
 
-    <Replace this text with your answer>
+    Pages should only be flushed to disk when a checkpoint is created. Everything else should be recorded in the log and the database should take care of this when refer to the recovery algorithm to make sure it’s in a consistent state
 
 
 After you complete the lab, please answer the following questions.  
 
 8. What is your name?  If you work with a partner, be sure to write both of your names.
 
-    <Replace this text with your answer>
+    Andy Dau
 
 9. What did you think of this assignment?
 
-    <Replace this text with your answer>
+    The last part about no force and steal is a bit unclear. I only changed the logic of when a page is flushed or evicted and every tests passes but it still does not not make a lot of sense.
 
 10. What was the hardest part of this assignment?
 
-    <Replace this text with your answer>
+    The last part of the lab is rather unclear. All the materials seems to say that ARIES should automatically support no force, steal but I think there has to be more work to be done than just changing when a page is flushed.
 
 11. Describe any missing or incomplete elements of your code.
 
-    <Replace this text with your answer>
+    If the last part cause any problem that you may see, you could revert to the previous version of the code which should work fine with force, no steal.
 
 12. Roughly how long did you spend working on this lab?
 
-    <Replace this text with your answer>
-
+    About 5 hours.
